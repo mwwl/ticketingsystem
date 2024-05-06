@@ -1,0 +1,24 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        input:
+          destination: inventory-event # consuming from the inventory-event topic
+        output:
+          destination: event-updates # publish to the order-updates topic
+
+
+  default-binder: kafka
+  kafka:
+    bootstrap-servers: localhost:9092
+    binder:
+      auto-create-topics: true
+      consumer:
+        key.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
+        value.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
+      producer:
+        key.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 8083

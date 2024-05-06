@@ -1,0 +1,27 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        input1:
+          destination: client-event # consuming from the client-event topic
+        output1:
+          destination: callback-event # publishing to the callback-event  topic
+        input2:
+            destination: order-updates # consuming from the order-updates topic
+        output2:
+          destination: order-event # publishing to the order event topic
+
+  default-binder: kafka
+  kafka:
+    bootstrap-servers: localhost:9092
+    binder:
+      auto-create-topics: true
+      consumer:
+        key.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
+        value.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
+      producer:
+        key.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+        value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: 8081
