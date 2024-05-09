@@ -5,10 +5,12 @@ import com.distalgo.saga.dto.OrderRequestDTO;
 import com.distalgo.saga.events.ClientEvent;
 import com.distalgo.saga.events.OrderEvent;
 import com.distalgo.saga.events.OrderStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 
 /**
@@ -29,28 +31,26 @@ public class ClientPublisherService {
     @Value(value = "client-event")
     private String topic;
 
+    @Autowired
+    ClientService clientService;
+
+
     public void publishClientEvent(String sessionID, ArrayList<Integer> input) {
         ClientRequestDTO clientRequestDTO = createClientRequestDTO(sessionID, input);
         ClientEvent clientEvent = new ClientEvent(clientRequestDTO);
 
+        System.out.println("client request DTO: " + clientRequestDTO);
         System.out.println("created the client event to send: " + clientEvent);
 
         clientEventProducerKafkaTemplate.send(topic, clientEvent)
-                .doOnSuccess(sendResult -> System.out.println("sent from client: " + clientEvent))
+                .doOnSuccess(sendResult -> {
+                    System.out.println("sent from client: " + clientEvent);
+                    clientService.saveCurrentTime(Instant.now());
+                })
                 .subscribe();
     }
 
     private ClientRequestDTO createClientRequestDTO(String sessionID, ArrayList<Integer> input) {
         return new ClientRequestDTO(sessionID, input.get(USER_ID_IDX), input.get(EVENT_ID_IDX), input.get(NUM_SEATS_IDX));
     }
-
-//    public void publishClientEvent(ClientRequestDTO clientRequestDTO) {
-//        ClientEvent clientEvent = new ClientEvent(clientRequestDTO);
-//        System.out.println("created the client event to send: " + clientEvent);
-//
-//        clientEventProducerKafkaTemplate.send(topic, clientEvent)
-//                .doOnSuccess(sendResult -> System.out.println("sent from client: " + clientEvent))
-//                .subscribe();
-//
-//    }
 }
