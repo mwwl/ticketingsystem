@@ -1,12 +1,8 @@
 package com.distalgo.saga.order.service;
 
 import com.distalgo.saga.dto.ClientRequestDTO;
-import com.distalgo.saga.dto.OrderCallbackDTO;
 import com.distalgo.saga.dto.OrderRequestDTO;
 import com.distalgo.saga.events.*;
-import com.distalgo.saga.order.controller.OrderController;
-import com.distalgo.saga.order.entity.OrderEntity;
-import com.distalgo.saga.order.repo.OrderRepo;
 import jakarta.annotation.PostConstruct;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -15,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.reactive.ReactiveKafkaConsumerTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class OrderConsumerService {
@@ -22,6 +19,7 @@ public class OrderConsumerService {
     private final ReactiveKafkaConsumerTemplate<String, InventoryEvent> inventoryEventConsumerKafkaTemplate;
     private final ReactiveKafkaConsumerTemplate<String, PaymentEvent> paymentEventConsumerKafkaTemplate;
     private final ReactiveKafkaConsumerTemplate<String, ClientEvent> clientEventConsumerKafkaTemplate;
+    private final ReactiveKafkaConsumerTemplate<String, Event> eventConsumerKafkaTemplate;
 
     @Autowired
     OrderService orderService;
@@ -29,10 +27,11 @@ public class OrderConsumerService {
 
     public OrderConsumerService(ReactiveKafkaConsumerTemplate<String, InventoryEvent> inventoryEventConsumerKafkaTemplate,
                                 ReactiveKafkaConsumerTemplate<String, PaymentEvent> paymentEventConsumerKafkaTemplate,
-                                ReactiveKafkaConsumerTemplate<String, ClientEvent> clientEventConsumerKafkaTemplate) {
+                                ReactiveKafkaConsumerTemplate<String, ClientEvent> clientEventConsumerKafkaTemplate, ReactiveKafkaConsumerTemplate<String, Event> eventConsumerKafkaTemplate) {
         this.inventoryEventConsumerKafkaTemplate = inventoryEventConsumerKafkaTemplate;
         this.paymentEventConsumerKafkaTemplate = paymentEventConsumerKafkaTemplate;
         this.clientEventConsumerKafkaTemplate = clientEventConsumerKafkaTemplate;
+        this.eventConsumerKafkaTemplate = eventConsumerKafkaTemplate;
     }
 
     /**
@@ -41,8 +40,8 @@ public class OrderConsumerService {
     @PostConstruct
     public void startConsumingOrderEvents() {
         consumeClientEvent().subscribe();
-        consumeInventoryEvent().subscribe();
-        consumePaymentEvent().subscribe();
+        consumeInventoryOrPaymentEvent().subscribe();
+        System.out.println("subscribed to each of the event consumers - client, inventory, and payment");
     }
 
     /**
@@ -51,15 +50,52 @@ public class OrderConsumerService {
      * @return
      */
     private Flux<ClientEvent> consumeClientEvent() {
+        System.out.println("CONSUME CLIENT EVENT");
         return clientEventConsumerKafkaTemplate
                 .receiveAutoAck()
                 .map(ConsumerRecord::value)
                 .doOnNext(clientEvent -> {
-                    logger.info("within order consumer, consume payment event, consuming type: {}", String.valueOf(clientEvent.getClass()));
+                    logger.info("within order consumer, consume client event, consuming type: {}", String.valueOf(clientEvent.getClass()));
                     logger.info("received: {}", clientEvent);
                     startOrder(clientEvent);
                 });
     }
+
+    private Flux<Void> consumeInventoryOrPaymentEvent() {
+        System.out.println("CONSUMING EITHER INVENTORY OR PAYMENT EVENT");
+        return eventConsumerKafkaTemplate
+                .receiveAutoAck()
+                .map(ConsumerRecord::value)
+                .flatMap(this::processEvent);
+    }
+
+    private Mono<Void> processEvent(Event event) {
+        if (event instanceof InventoryEvent) {
+            System.out.println("Turns out, its an inventory event");
+            return handleInventoryEvent((InventoryEvent) event);
+        } else if (event instanceof PaymentEvent) {
+            System.out.println("Turns out, its a payment event");
+            return handlePaymentEvent((PaymentEvent) event);
+        } else {
+            return Mono.empty();
+        }
+    }
+
+    private Mono<Void> handleInventoryEvent(InventoryEvent inventoryEvent) {
+        return Mono.fromRunnable(() -> {
+            System.out.println("received in handleInventoryEvent: " + inventoryEvent);
+            orderService.updateOrder(inventoryEvent);
+        });
+    }
+
+    private Mono<Void> handlePaymentEvent(PaymentEvent paymentEvent) {
+        return Mono.fromRunnable(() -> {
+            System.out.println("received in handlePaymentEvent: " + paymentEvent);
+            orderService.updateOrder(paymentEvent);
+        });
+    }
+
+
 
     /**
      * Consumed inventory event, to update order
@@ -67,6 +103,7 @@ public class OrderConsumerService {
      * @return
      */
     private Flux<InventoryEvent> consumeInventoryEvent() {
+        System.out.println("CONSUME INVENTORY EVENT");
         return inventoryEventConsumerKafkaTemplate
                 .receiveAutoAck()
                 .map(ConsumerRecord::value)
@@ -83,6 +120,7 @@ public class OrderConsumerService {
      * @return
      */
     private Flux<PaymentEvent> consumePaymentEvent() {
+        System.out.println("CONSUME PAYMENT EVENT");
         return paymentEventConsumerKafkaTemplate
                 .receiveAutoAck()
                 .map(ConsumerRecord::value)
@@ -105,7 +143,7 @@ public class OrderConsumerService {
         ClientRequestDTO clientRequestDTO = clientEvent.getClientRequestDTO();
         OrderRequestDTO orderRequestDTO = constructOrderRequestDTO(clientRequestDTO);
         System.out.println("created orderRequestDTO in startOrder: " + orderRequestDTO);
-        orderService.createOrder(orderRequestDTO);
+        orderService.createOrder(orderRequestDTO, clientEvent.getClientRequestDTO().getSessionID());
     }
 
 //    /**
