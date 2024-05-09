@@ -70,7 +70,6 @@ public class InventoryValidationService {
                     }
                 })
                 .orElse(new InventoryEvent(inventoryRequestDTO, InventoryStatus.NO_EVENT));
-        // TODO: Have to communicate this with the client when no event has been found
     }
 
     /**
