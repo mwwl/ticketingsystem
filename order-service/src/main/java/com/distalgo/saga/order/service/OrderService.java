@@ -28,9 +28,10 @@ public class OrderService {
      * Still need to have an argument to give the sessionID to be saved
      */
     @Transactional
-    public OrderEntity createOrder(OrderRequestDTO orderRequestDTO) {
+    public void createOrder(OrderRequestDTO orderRequestDTO, String sessionID) {
         System.out.println("created order, now saving");
         OrderEntity orderToSave = convertDTOToEntity(orderRequestDTO);
+        orderToSave.setSessionID(sessionID);
 
         OrderEntity orderSaved = orderRepo.save(orderToSave);
         System.out.println("order saved: " + orderSaved);
@@ -38,9 +39,8 @@ public class OrderService {
         System.out.println("going to publish order event");
 
         orderPublisherService.publishOrderEvent(orderRequestDTO, OrderStatus.ORDER_CREATED);
-
         // is this order to save returned last after everything is done?? run a failed inventory check, and see what is returned first
-        return orderToSave;
+//        return orderToSave;
     }
 
     /**
@@ -65,6 +65,7 @@ public class OrderService {
                     orderRepo.save(orderRecord);
                     System.out.println("order after saving to repo: " + orderRecord);
                     OrderCallbackDTO callbackDTO = constructCallbackDTO(orderRecord);
+                    System.out.println("in updateOrder for inventory event, the callback DTO is: " + callbackDTO);
                     orderPublisherService.publishCallbackEvent(callbackDTO, orderRecord.getSessionID());
                 });
     }
@@ -100,6 +101,7 @@ public class OrderService {
                     orderRepo.save(orderRecord);
                     System.out.println("newly updated order, going to publish to callback-event topic: " + orderRecord);
                     OrderCallbackDTO callbackDTO = constructCallbackDTO(orderRecord);
+                    System.out.println("in updateOrder for payment event, the callbackDTO is: " + callbackDTO);
                     orderPublisherService.publishCallbackEvent(callbackDTO, orderRecord.getSessionID());
                 });
     }
