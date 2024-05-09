@@ -9,17 +9,12 @@ spring:
 
   default-binder: kafka
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: localhost:9092
     binder:
       auto-create-topics: true
       consumer:
-        group-id: clients
         key.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
         value.deserializer: org.springframework.kafka.support.deserializer.JsonDeserializer
       producer:
         key.serializer: org.springframework.kafka.support.serializer.JsonSerializer
         value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-
-server:
-  port: 3000
