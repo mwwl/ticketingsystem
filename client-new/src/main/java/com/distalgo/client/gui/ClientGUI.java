@@ -44,7 +44,6 @@ public class ClientGUI {
     private JScrollPane outputWrapper;
     private JTextArea outputBox;
 
-//    @Autowired
     public ClientGUI(String sessionID, ClientPublisherService publisherService) {
         this.sessionID = sessionID;
         this.publisherService = publisherService;
@@ -83,10 +82,15 @@ public class ClientGUI {
         contentPanel.add(outputPanel);
         frame.getContentPane().add(contentPanel);
         frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
     public void updateOutputBox(Integer orderID, OrderStatus orderStatus, InventoryStatus inventoryStatus, PaymentStatus paymentStatus) {
         showcaseOrderStatus(orderID, orderStatus, inventoryStatus, paymentStatus);
+    }
+
+    public void updateOutputBox(String update) {
+        showcaseServiceUpdate(update);
     }
 
 
@@ -235,12 +239,13 @@ public class ClientGUI {
      */
     private void showcaseOrderStatus(Integer orderID, OrderStatus orderStatus, InventoryStatus inventoryStatus,
                                      PaymentStatus paymentStatus) {
+        outputBox.setText("");
         outputBox.append(format("Your order (#%d) ", orderID));
 
         if (orderStatus == OrderStatus.ORDER_SUCCESS) {
             outputBox.append("was successful! Enjoy the event~\n");
         } else {
-            outputBox.append("has failed. \n");
+            outputBox.append("has failed: ");
             showcaseInventoryStatus(inventoryStatus);
             showcasePaymentStatus(paymentStatus);
         }
@@ -250,13 +255,17 @@ public class ClientGUI {
      * Shows the inventory status to the client
      */
     private void showcaseInventoryStatus(InventoryStatus inventoryStatus) {
-        switch (inventoryStatus) {
-            case INVENTORY_CHECK_FAILED:
-                outputBox.append("Unfortunately, there is insufficient inventory for the given event.\n");
-                break;
-            case NO_EVENT:
-                outputBox.append("No such event exists, please verify that the correct eventID was provided.\n");
-                break;
+        if (inventoryStatus != null) {
+            switch (inventoryStatus) {
+                case INVENTORY_CHECK_FAILED:
+                    outputBox.append("unfortunately, there is insufficient seats for given event.\n");
+                    break;
+                case NO_EVENT:
+                    outputBox.append("no such event exists, please verify that the correct eventID was provided.\n");
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -264,14 +273,26 @@ public class ClientGUI {
      * Shows the payment status to the client
      */
     private void showcasePaymentStatus(PaymentStatus paymentStatus) {
-        switch (paymentStatus) {
-            case PAYMENT_FAILED:
-                outputBox.append("The account associated with this user has insufficient balance.\n");
-                break;
-            case USER_NOT_FOUND:
-                outputBox.append("No such user exists, please verify that the correct userID was used.\n");
-                break;
+        if (paymentStatus != null) {
+            switch (paymentStatus) {
+                case PAYMENT_FAILED:
+                    outputBox.append("insufficient balance in the users' account.\n");
+                    break;
+                case USER_NOT_FOUND:
+                    outputBox.append("no such user exists, please verify that the correct userID was used.\n");
+                    break;
+                default:
+                    break;
+            }
         }
+    }
+
+    /**
+     * Informs the client that at least one of the service is down
+     */
+    private void showcaseServiceUpdate(String string) {
+        outputBox.setText("");
+        outputBox.append(string);
     }
 }
 
