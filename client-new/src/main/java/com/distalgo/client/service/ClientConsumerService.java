@@ -44,7 +44,9 @@ public class ClientConsumerService {
                 .map(ConsumerRecord::value)
                 .filter(callbackEvent -> callbackEvent.getSessionID().equals(clientService.getSessionID()))
                 .doOnNext(callbackEvent -> {
-                    System.out.println("within ClientConsumerService, received: " + callbackEvent);
+//                    logger.info("Received callback event: {}", callbackEvent);
+                    System.out.println("Received callback event: " + callbackEvent);
+                    clientService.saveCurrentTime(null);
                     clientService.updateClient(callbackEvent);
                 });
     }
@@ -56,7 +58,6 @@ public class ClientConsumerService {
      */
     @Scheduled(fixedDelay = 10000)
     private void checkUnconsumed() {
-        System.out.println("checking unconsumed");
         Instant lastTimestamp = clientService.getLastPublishedTime();
         Instant currentTimeStamp = Instant.now();
         String clientUpdate = "One of the services is down, your tickets are tentatively booked, " +
@@ -65,7 +66,8 @@ public class ClientConsumerService {
         if (lastTimestamp != null) {
             Duration timePassed = Duration.between(lastTimestamp, currentTimeStamp);
             if (timePassed.toMillis() > 10000) {
-                System.out.println("current time stamp: " + currentTimeStamp);
+//                logger.info("Timeout while waiting for a message from order service");
+                System.out.println("Timeout while waiting for a message from order service");
                 clientService.updateClient(clientUpdate);
                 clientService.saveCurrentTime(null);
             }
