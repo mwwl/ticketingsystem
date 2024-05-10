@@ -2,7 +2,10 @@
 
 A ticketing system implemented with the Saga Pattern.
 
-[Insert architecture]
+## Overall Architecture
+
+![Implementation Architecture](https://github.com/mwwl/ticketingsystem/blob/60e556347ea0131e51426367c4c560f2d6a9ad92/SAGA_architecture.png)
+
 
 ## Microservices Involved
 
