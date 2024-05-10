@@ -46,3 +46,114 @@ After ensuring the above is functioning:
 2. Run OrderServiceApplication
 3. Run InventoryServiceApplication
 4. Run PaymentServiceApplication
+
+## File Directory Tree
+```
+ticketingsystem/
+├── .mvn
+├── client-new/
+│   ├── src/main/
+│   │   ├── java/com/distalgo/client/
+│   │   │   ├── config/
+│   │   │   │   ├── ClientConsumerConfig.java
+│   │   │   │   └── ClientPublisherConfig.java
+│   │   │   ├── gui/
+│   │   │   │   ├── ClientGUI.form
+│   │   │   │   └── ClientGUI.java
+│   │   │   ├── service/
+│   │   │   │   ├── ClientConsumerService.java
+│   │   │   │   ├── ClientPublisherService.java
+│   │   │   │   └── ClientService.java
+│   │   │   └── ClientApplication.java
+│   │   └── resources
+│   └── pom.xml
+├── common/
+│   ├── src/main/java/com/distalgo/saga/
+│   │   ├── callback/
+│   │   │   ├── CallbackEntity.java
+│   │   │   ├── CallbackRepo.java
+│   │   │   └── CallbackService.java
+│   │   ├── dto/
+│   │   │   ├── ClientRequestDTO.java
+│   │   │   ├── InventoryRequestDTO.java
+│   │   │   ├── OrderCallbackDTO.java
+│   │   │   ├── OrderRequestDTO.java
+│   │   │   └── PaymentRequestDTO.java
+│   │   └── events/
+│   │       ├── CallbackEvent.java
+│   │       ├── ClientEvent.java
+│   │       ├── Event.java
+│   │       ├── InventoryEvent.java
+│   │       ├── InventoryStatus.java
+│   │       ├── OrderEvent.java
+│   │       ├── OrderStatus.java
+│   │       ├── PaymentEvent.java
+│   │       └── PaymentStatus.java
+│   └── pom.xml
+├── inventory-service/
+│   ├── src/main/
+│   │   ├── java/com/distalgo/saga/inventory/
+│   │   │   ├── config/
+│   │   │   │   ├── InventoryConsumerConfig.java
+│   │   │   │   └── InventoryPublisherConfig.java
+│   │   │   ├── entity/
+│   │   │   │   ├── EventInventory.java
+│   │   │   │   └── InventoryTransaction.java
+│   │   │   ├── repo/
+│   │   │   │   ├── EventInventoryRepo.java
+│   │   │   │   └── InventoryTransactionRepo.java
+│   │   │   └── service/
+│   │   │       ├── InventoryConsumerService.java
+│   │   │       ├── InventoryEventPublisher.java
+│   │   │       └── InventoryValidationService.java
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── application.yml
+│   └── pom.xml
+├── order-service/
+│   ├── src/main/
+│   │   ├── java/com/distalgo/saga/order/
+│   │   │   ├── config/
+│   │   │   │   ├── OrderConsumerConfig.java
+│   │   │   │   └── OrderEventPublisherConfig.java
+│   │   │   ├── entity/
+│   │   │   │   └── OrderEntity.java
+│   │   │   ├── repo/
+│   │   │   │   └── OrderRepo.java
+│   │   │   ├── service/
+│   │   │   │   ├── OrderConsumerService.java
+│   │   │   │   ├── OrderPublisherService.java
+│   │   │   │   └── OrderService.java
+│   │   │   └── OrderServiceApplication.java
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── application.yml
+│   └── pom.xml
+├── payment-service/
+│   ├── src/main/
+│   │   ├── java/com/distalgo/saga/payment/
+│   │   │   ├── config/
+│   │   │   │   ├── PaymentConsumerConfig.java
+│   │   │   │   └── PaymentPublisherConfig.java
+│   │   │   ├── entity/
+│   │   │   │   ├── UserBalance.java
+│   │   │   │   └── UserTransaction.java
+│   │   │   ├── repo/
+│   │   │   │   ├── UserBalanceRepo.java
+│   │   │   │   └── UserTransactionRepo.java
+│   │   │   ├── service/
+│   │   │   │   ├── PaymentConsumerService.java
+│   │   │   │   ├── PaymentEventPublisher.java
+│   │   │   │   └── PaymentValidationService.java
+│   │   │   └── PaymentServiceApplication.java
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── application.yml
+│   └── pom.xml
+├── .gitignore
+├── Functions Overview.docx
+├── mvnw
+├── mvnw.cmd
+├── README.md
+└── pom.xml
+```
