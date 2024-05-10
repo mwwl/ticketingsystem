@@ -62,7 +62,7 @@ public class InventoryValidationService {
                     if (inventoryBalance.getSeatsAvail() >= seats) {
                         // there is enough seats to be booked
                         inventoryBalance.setSeatsAvail(inventoryBalance.getSeatsAvail() - seats);
-                        System.out.println("==== DEDUCTED FROM INVENTORY ====");
+                        System.out.println("==== DEDUCTED SEATS FROM INVENTORY ====");
                         inventoryTransactionRepo.save(new InventoryTransaction(orderID, eventID, seats));
                         return new InventoryEvent(inventoryRequestDTO, InventoryStatus.INVENTORY_CHECK_SUCCESS);
                     } else {
@@ -97,7 +97,7 @@ public class InventoryValidationService {
                     System.out.println("cancelling transaction for this event: " + eventID + " for this order: " + orderID);
                     Integer seatsOrdered = inventoryTransaction.getSeats();
                     inventoryTransactionRepo.delete(inventoryTransaction);
-                    System.out.println("==== ADDED BACK TO INVENTORY ====");
+                    System.out.println("==== ADDED SEATS BACK TO INVENTORY ====");
                     eventInventoryRepo.findById(eventID)
                             .ifPresent(seatBalance -> seatBalance.setSeatsAvail(seatBalance.getSeatsAvail() + seatsOrdered));
                 });

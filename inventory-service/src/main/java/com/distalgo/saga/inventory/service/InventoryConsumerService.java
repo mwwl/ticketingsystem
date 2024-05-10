@@ -62,7 +62,8 @@ public class InventoryConsumerService {
                 .receiveAutoAck()
                 .map(ConsumerRecord::value)
                 .doOnNext(orderEvent -> {
-                    logger.info("received: {}", orderEvent);
+//                    logger.info("received: {}", orderEvent);
+                    System.out.println("Received Order Event: " + orderEvent);
                     validateInventory(orderEvent);
                 });
     }
@@ -79,11 +80,9 @@ public class InventoryConsumerService {
     private void validateInventory(OrderEvent orderEvent) {
         if (orderEvent.getOrderStatus().equals(OrderStatus.ORDER_CREATED)) {
             InventoryEvent inventoryEvent = inventoryValidationService.newOrderEvent(orderEvent);
-            System.out.println("INVENTORY EVENT HAS BEEN CREATED, THIS IS RETURNED: " + inventoryEvent);
             inventoryEventPublisher.publishInventoryEvent(inventoryEvent);
-        } else { // note: order status: order_pending is not being used yet
-            // TODO: order has been cancelled somehow (ORDER_CANCELLED) -- may need to send something back as confirmation(?)
-            // have to check the payment status -- if payment status is successful, have to send to payment
+        } else { // just removed some comments here, no big change
+            System.out.println("Performing compensation for this order (#" + orderEvent.getOrderRequestDTO().getOrderID() + ")");
             inventoryValidationService.cancelOrderEvent(orderEvent);
         }
     }

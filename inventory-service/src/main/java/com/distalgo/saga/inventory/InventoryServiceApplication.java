@@ -7,6 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class InventoryServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(InventoryServiceApplication.class);
+        try {
+            SpringApplication.run(InventoryServiceApplication.class);
+        } catch (Exception e) {
+            System.out.println("Error with setting up the service");
+            System.exit(1);
+        }
     }
 }

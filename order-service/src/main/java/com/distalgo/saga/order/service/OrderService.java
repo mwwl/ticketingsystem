@@ -5,10 +5,12 @@ import com.distalgo.saga.dto.OrderRequestDTO;
 import com.distalgo.saga.events.*;
 import com.distalgo.saga.order.entity.OrderEntity;
 import com.distalgo.saga.order.repo.OrderRepo;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -18,6 +20,8 @@ public class OrderService {
 
     @Autowired
     private OrderPublisherService orderPublisherService;
+
+    private HashMap<Integer, Integer> eventPricelist;
 
 
     /**
@@ -29,18 +33,14 @@ public class OrderService {
      */
     @Transactional
     public void createOrder(OrderRequestDTO orderRequestDTO, String sessionID) {
-        System.out.println("created order, now saving");
         OrderEntity orderToSave = convertDTOToEntity(orderRequestDTO);
         orderToSave.setSessionID(sessionID);
 
         OrderEntity orderSaved = orderRepo.save(orderToSave);
-        System.out.println("order saved: " + orderSaved);
+//        logger.info("Saved order in repo: {}", orderSaved);
+        System.out.println("Saved order in repo: " + orderSaved);
         orderRequestDTO.setOrderID(orderSaved.getOrderID());
-        System.out.println("going to publish order event");
-
         orderPublisherService.publishOrderEvent(orderRequestDTO, OrderStatus.ORDER_CREATED);
-        // is this order to save returned last after everything is done?? run a failed inventory check, and see what is returned first
-//        return orderToSave;
     }
 
     /**
@@ -55,17 +55,12 @@ public class OrderService {
      */
     @Transactional
     public void updateOrder(InventoryEvent inventoryEvent) {
-        System.out.println("UPDATE ORDER, EXPECTING INVENTORY EVENT");
-        System.out.println("UPDATE ORDER, EXPECTING INVENTORY EVENT");
         // finds order in the repo
         orderRepo.findById(inventoryEvent.getInventoryRequestDTO().getOrderID())
                 .ifPresent(orderRecord -> {
-                    System.out.println("order retrieved from repo: " + orderRecord);
                     setStatuses(orderRecord, OrderStatus.ORDER_FAILED, inventoryEvent.getInventoryStatus(), null);
                     orderRepo.save(orderRecord);
-                    System.out.println("order after saving to repo: " + orderRecord);
                     OrderCallbackDTO callbackDTO = constructCallbackDTO(orderRecord);
-                    System.out.println("in updateOrder for inventory event, the callback DTO is: " + callbackDTO);
                     orderPublisherService.publishCallbackEvent(callbackDTO, orderRecord.getSessionID());
                 });
     }
@@ -78,32 +73,52 @@ public class OrderService {
      * <p>
      * inventory check success, but payment event may or may not have failed
      *
+     * Regardless of success or failure, it will always publish to the callback event, but only when there's a
+     * failure, will it publish it to the order-event for the inventory service to consume
+     *
      * @param paymentEvent
      */
     @Transactional
     public void updateOrder(PaymentEvent paymentEvent) {
-        System.out.println("UPDATE ORDER, EXPECTING PAYMENT EVENT");
         PaymentStatus paymentStatus = paymentEvent.getPaymentStatus();
-        System.out.println("PAYMENT STATUS: " + paymentStatus);
 
         orderRepo.findById(paymentEvent.getPaymentRequestDTO().getOrderID())
                 .ifPresent(orderRecord -> {
 //                    System.out.println("order (after receiving payment) retrieved from repo: " + orderRecord);
                     if (paymentStatus.equals(PaymentStatus.PAYMENT_SUCCESS)) {
                         // payment has succeeded, update order record accordingly
-                        System.out.println("before setting status after successful payment: " + orderRecord);
                         setStatuses(orderRecord, OrderStatus.ORDER_SUCCESS, InventoryStatus.INVENTORY_CHECK_SUCCESS, paymentStatus);
-                        System.out.println("after setting status after successful payment: " + orderRecord);
+//                        logger.info("Payment successful");
+                        System.out.println("Payment successful");
                     } else {
                         // payment has failed, so need to update the order record accordingly, and send this to the order-event for inventory service to do compensating action
                         setStatuses(orderRecord, OrderStatus.ORDER_FAILED, InventoryStatus.INVENTORY_CHECK_SUCCESS, paymentStatus);
+                        OrderRequestDTO orderRequestDTO = constructOrderRequestDTO(orderRecord);
+//                        logger.info("Payment failed");
+                        System.out.println("Payment failed");
+
+                        orderPublisherService.publishOrderEvent(orderRequestDTO, OrderStatus.ORDER_FAILED);
                     }
                     orderRepo.save(orderRecord);
-                    System.out.println("newly updated order, going to publish to callback-event topic: " + orderRecord);
                     OrderCallbackDTO callbackDTO = constructCallbackDTO(orderRecord);
-                    System.out.println("in updateOrder for payment event, the callbackDTO is: " + callbackDTO);
                     orderPublisherService.publishCallbackEvent(callbackDTO, orderRecord.getSessionID());
                 });
+    }
+
+
+    public Integer getTicketPrice(Integer eventID) {
+        Integer price = eventPricelist.get(eventID);
+
+        if (price == null) {
+            price = 0;
+        }
+//        logger.info("Ticket price (1): {}", price);
+        System.out.println("Price of 1 ticket: " + price);
+        return price;
+    }
+
+    public List<OrderEntity> getAllOrders(){
+        return orderRepo.findAll();
     }
 
     private void setStatuses(OrderEntity orderRecord, OrderStatus orderStatus, InventoryStatus inventoryStatus,
@@ -113,13 +128,14 @@ public class OrderService {
         orderRecord.setPaymentStatus(paymentStatus);
     }
 
+    private OrderRequestDTO constructOrderRequestDTO(OrderEntity orderRecord) {
+        return new OrderRequestDTO(orderRecord.getUserID(), orderRecord.getEventID(), orderRecord.getSeats(),
+                orderRecord.getPrice(), orderRecord.getOrderID());
+    }
+
     private OrderCallbackDTO constructCallbackDTO(OrderEntity orderRecord) {
         return new OrderCallbackDTO(orderRecord.getOrderID(), orderRecord.getOrderStatus(),
                 orderRecord.getInventoryStatus(), orderRecord.getPaymentStatus());
-    }
-
-    public List<OrderEntity> getAllOrders(){
-        return orderRepo.findAll();
     }
 
     private OrderEntity convertDTOToEntity(OrderRequestDTO orderRequestDTO) {
@@ -131,5 +147,16 @@ public class OrderService {
         orderEntity.setSeats(orderRequestDTO.getSeats());
         orderEntity.setOrderStatus(OrderStatus.ORDER_CREATED);
         return orderEntity;
+    }
+
+    // added event ticket list
+    @PostConstruct
+    private void eventTicketList() {
+        eventPricelist = new HashMap<>();
+        eventPricelist.put(10100, 10);
+        eventPricelist.put(10200, 30);
+        eventPricelist.put(10300, 5);
+        eventPricelist.put(10400, 20);
+        eventPricelist.put(10500, 1);
     }
 }

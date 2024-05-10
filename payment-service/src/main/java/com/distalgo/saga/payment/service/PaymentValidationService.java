@@ -50,15 +50,17 @@ public class PaymentValidationService {
         return userBalanceRepo.findById(userID)
                 .map(userBalance -> {
                     if (userBalance.getBalance() >= amount) {
+                        System.out.println("Current balance for " + userID + " : " + userBalance.getBalance());
                         userBalance.setBalance(userBalance.getBalance() - amount);
-                        userTransactionRepo.save(new UserTransaction(orderID, userID, amount));
+                        UserTransaction userTransaction = userTransactionRepo.save(new UserTransaction(orderID, userID, amount));
+                        System.out.println("New balance for " + userID + " : " + userBalance.getBalance());
                         return new PaymentEvent(paymentRequestDTO, PaymentStatus.PAYMENT_SUCCESS);
                     } else {
+                        System.out.println("User (" + userID + ") does not have sufficient balance, payment failed");
                         return new PaymentEvent(paymentRequestDTO, PaymentStatus.PAYMENT_FAILED);
                     }
                 })
                 .orElse(new PaymentEvent(paymentRequestDTO, PaymentStatus.USER_NOT_FOUND));
-        // TODO: Have to communicate this with the client the user is not in the db
     }
 
     /**
@@ -73,14 +75,13 @@ public class PaymentValidationService {
         userTransactionRepo.findById(orderID)
                 .ifPresent(userTransaction -> {
                     Integer userID = userTransaction.getUserID();
-                    System.out.println("cancelling payment for this user: " + userID + "for this order: " + orderID);
+                    System.out.println("Cancelling payment for this user: " + userID + " for this order: " + orderID);
                     Integer amountToRefund = userTransaction.getAmount();
                     userTransactionRepo.delete(userTransaction);
                     userBalanceRepo.findById(userID)
                             .ifPresent(userBalance -> userBalance.setBalance(userBalance.getBalance() + amountToRefund));
                 });
     }
-
 
 
     /**
@@ -100,9 +101,4 @@ public class PaymentValidationService {
         details.add(inventoryRequestDTO.getOrderID());
         return details;
     }
-
-
-
-
-
 }

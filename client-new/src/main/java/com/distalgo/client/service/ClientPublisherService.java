@@ -1,10 +1,7 @@
 package com.distalgo.client.service;
 
 import com.distalgo.saga.dto.ClientRequestDTO;
-import com.distalgo.saga.dto.OrderRequestDTO;
 import com.distalgo.saga.events.ClientEvent;
-import com.distalgo.saga.events.OrderEvent;
-import com.distalgo.saga.events.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
@@ -39,12 +36,9 @@ public class ClientPublisherService {
         ClientRequestDTO clientRequestDTO = createClientRequestDTO(sessionID, input);
         ClientEvent clientEvent = new ClientEvent(clientRequestDTO);
 
-        System.out.println("client request DTO: " + clientRequestDTO);
-        System.out.println("created the client event to send: " + clientEvent);
-
         clientEventProducerKafkaTemplate.send(topic, clientEvent)
                 .doOnSuccess(sendResult -> {
-                    System.out.println("sent from client: " + clientEvent);
+                    System.out.println("Sent from client: " + clientEvent);
                     clientService.saveCurrentTime(Instant.now());
                 })
                 .subscribe();

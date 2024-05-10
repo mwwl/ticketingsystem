@@ -8,6 +8,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class OrderServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(OrderServiceApplication.class);
+        try {
+            SpringApplication.run(OrderServiceApplication.class);
+        } catch (Exception e) {
+            System.out.println("Error with setting up the service");
+            System.exit(1);
+        }
     }
 }

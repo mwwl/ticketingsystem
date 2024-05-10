@@ -12,13 +12,10 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 public class OrderEvent implements Event{
-        @JsonProperty("event_id")
+        // deleted @JsonProperty("____")
         private final UUID eventID = UUID.randomUUID();
-        @JsonProperty("date")
         private final Date date = new Date();
-        @JsonProperty("order_request_dto")
         private OrderRequestDTO orderRequestDTO;
-        @JsonProperty("order_status")
         private OrderStatus orderStatus;
 
         public OrderEvent(OrderRequestDTO orderRequestDTO, OrderStatus orderStatus) {

@@ -165,15 +165,10 @@ public class ClientGUI {
             public void actionPerformed(ActionEvent e) {
                 ArrayList<Integer> input = verifyInput(); // includes all the input
                 // use sessionID here/pass sessionID to the client controller
-                System.out.println("input after clicking confirm: " + input);
                 if (input != null) {
-                    System.out.println("going to send order request");
-//                    clientController.sendOrderRequest(sessionID, input, clientIP, clientPort);
-                    // publish needs the clientEventDTO
                     publisherService.publishClientEvent(sessionID, input);
-                    System.out.println("sent order request");
                 } else {
-                    System.out.println("Wrong input was entered");
+                    System.err.println("Wrong input was entered - either not integers or not all fields filled");
                 }
             }
         });

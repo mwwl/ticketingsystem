@@ -58,7 +58,7 @@ public class PaymentConsumerService {
                 .receiveAutoAck()
                 .map(ConsumerRecord::value)
                 .doOnNext(inventoryEvent -> {
-                    logger.info("received: {}", inventoryEvent);
+                    System.out.println("Received InventoryEvent: " + inventoryEvent);
                     validateBalance(inventoryEvent);
                 });
     }
@@ -76,10 +76,8 @@ public class PaymentConsumerService {
      */
     private void validateBalance(InventoryEvent inventoryEvent) {
         if (inventoryEvent.getInventoryStatus().equals(InventoryStatus.INVENTORY_CHECK_SUCCESS)) {
-            // have a new inventory event, create a payment event (in the inventoryValidationService)
+            // have a new inventory event, create a payment event (in the inventoryValidationService), then publish
             PaymentEvent paymentEvent = paymentValidationService.newInventoryEvent(inventoryEvent);
-
-            // then publish the result into the event-updates topic
             paymentEventPublisher.publishPaymentEvent(paymentEvent);
         } else {
             // cancel the inventory event - compensation

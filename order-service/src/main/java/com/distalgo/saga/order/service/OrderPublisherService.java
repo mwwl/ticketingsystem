@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OrderPublisherService {
-
     private final ReactiveKafkaProducerTemplate<String, OrderEvent> orderEventProducerKafkaTemplate;
     private final ReactiveKafkaProducerTemplate<String, CallbackEvent> callbackEventProducerKafkaTemplate;
 
@@ -28,19 +27,16 @@ public class OrderPublisherService {
 
     public void publishOrderEvent(OrderRequestDTO orderRequestDTO, OrderStatus orderStatus) {
         OrderEvent orderEvent = new OrderEvent(orderRequestDTO, orderStatus);
-        System.out.println("created the order-event to send");
         orderEventProducerKafkaTemplate.send(orderTopic, orderEvent)
-                .doOnSuccess(sendResult -> System.out.println("sent to order-event: " + orderEvent))
+                .doOnSuccess(sendResult -> System.out.println("Sending to order-event: " + orderEvent))
                 .subscribe();
     }
-
 
     public void publishCallbackEvent(OrderCallbackDTO orderCallbackDTO, String sessionID) {
         CallbackEvent callbackEvent = new CallbackEvent(orderCallbackDTO);
         callbackEvent.setSessionID(sessionID);
-        System.out.println("created the order-event to send");
         callbackEventProducerKafkaTemplate.send(callbackTopic, callbackEvent)
-                .doOnSuccess(sendResult -> System.out.println("sent to callback-event: " + callbackEvent))
+                .doOnSuccess(sendResult -> System.out.println("Sending to callback-event: " + callbackEvent))
                 .subscribe();
     }
 }

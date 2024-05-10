@@ -18,7 +18,7 @@ public class PaymentEventPublisher {
 
     public void publishPaymentEvent(PaymentEvent paymentEvent) {
         paymentEventProducerKafkaTemplate.send(topic, paymentEvent)
-                .doOnSuccess(sendResult -> System.out.println("sent to topic (order-updates) from payment service: " + paymentEvent))
+                .doOnSuccess(sendResult -> System.out.println("Sent to topic (order-updates) from payment service: " + paymentEvent))
                 .subscribe();
     }
 }

@@ -28,11 +28,13 @@ public class InventoryEventPublisher {
     public void publishInventoryEvent(InventoryEvent inventoryEvent) {
         if (inventoryEvent.getInventoryStatus().equals(InventoryStatus.INVENTORY_CHECK_SUCCESS)) {
             inventoryEventProducerKafkaTemplate.send(successTopic, inventoryEvent)
-                    .doOnSuccess(sendResult -> System.out.println("sent to success (inventory-event): " + inventoryEvent))
+                    .doOnSuccess(sendResult ->
+                            System.out.println("Inventory check successful, sent to inventory-event: " + inventoryEvent))
                     .subscribe();
         } else {
             inventoryEventProducerKafkaTemplate.send(failedTopic, inventoryEvent)
-                    .doOnSuccess(sendResult -> System.out.println("sent to failed (order-updates): " + inventoryEvent))
+                    .doOnSuccess(sendResult ->
+                            System.out.println("Inventory check successful, sent to order-updates: " + inventoryEvent))
                     .subscribe();
         }
     }

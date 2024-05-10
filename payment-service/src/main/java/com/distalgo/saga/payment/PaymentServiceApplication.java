@@ -7,6 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class PaymentServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PaymentServiceApplication.class);
+        try {
+            SpringApplication.run(PaymentServiceApplication.class);
+        } catch (Exception e) {
+            System.out.println("Error with setting up the service");
+            System.exit(1);
+        }
     }
 }
